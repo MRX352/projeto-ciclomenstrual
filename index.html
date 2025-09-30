@@ -8,9 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -38,6 +36,7 @@
         #tooltip {
             transition: opacity 0.2s ease, transform 0.2s ease;
             transform: translate(-50%, -110%); pointer-events: none;
+            z-index: 50;
         }
         /* Estilos para o visualizador 3D */
         model-viewer {
@@ -51,6 +50,54 @@
         .molecule-btn.active {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Responsividade extra para gráficos */
+        @media (max-width: 900px) {
+            #hormoneChart, #endometriumChart {
+                width: 100% !important;
+                min-width: 0 !important;
+                height: 220px !important;
+            }
+            .w-full {
+                min-width: 0 !important;
+            }
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 0.5rem !important;
+            }
+            #hormoneChart, #endometriumChart {
+                width: 100% !important;
+                min-width: 0 !important;
+                height: 160px !important;
+            }
+            .rounded-2xl, .rounded-lg {
+                border-radius: 0.75rem !important;
+            }
+            .p-6 {
+                padding: 1rem !important;
+            }
+            .mb-12, .mb-8, .mb-6, .mb-4, .mb-2 {
+                margin-bottom: 1rem !important;
+            }
+            .text-4xl, .text-5xl {
+                font-size: 2rem !important;
+            }
+        }
+        /* Ajuste para o slider no mobile */
+        input[type="range"] {
+            touch-action: pan-x;
+            width: 100%;
+            max-width: 400px;
+        }
+        /* Tooltip mobile: maior e mais legível */
+        @media (max-width: 600px) {
+            #tooltip {
+                width: 90vw !important;
+                min-width: 0 !important;
+                font-size: 1rem !important;
+                padding: 0.75rem !important;
+            }
         }
     </style>
 </head>
@@ -84,19 +131,19 @@
         
         <section id="charts" class="bg-white p-6 rounded-2xl shadow-md mb-8">
             <h2 class="text-2xl font-bold text-center mb-2 text-indigo-500">Visualizações do Ciclo</h2>
-            <p class="text-center text-gray-500 mb-6">Passe o mouse sobre os gráficos ou use o controle deslizante para explorar.</p>
+            <p class="text-center text-gray-500 mb-6">Passe o dedo ou o mouse sobre os gráficos ou use o controle deslizante para explorar.</p>
             
             <div class="flex flex-col items-center mb-4">
                 <label for="daySlider" class="font-semibold mb-2">Dia do Ciclo: <span id="dayLabel" class="text-indigo-500 font-bold">1</span></label>
                 <input id="daySlider" type="range" min="1" max="28" value="1" class="w-full max-w-lg">
             </div>
 
-            <!-- Alterado: gráficos agora ficam um embaixo do outro -->
-            <div class="flex flex-col gap-12 items-center">
+            <!-- Gráficos um embaixo do outro, responsivos -->
+            <div class="flex flex-col gap-12 items-center w-full">
                 <div class="w-full">
                     <h3 class="text-lg font-semibold text-center text-gray-700 mb-2">Flutuações Hormonais</h3>
-                    <div class="relative">
-                        <svg id="hormoneChart" viewBox="0 0 800 400" class="w-full bg-gray-50 rounded-lg cursor-crosshair"></svg>
+                    <div class="relative w-full">
+                        <svg id="hormoneChart" viewBox="0 0 800 400" class="w-full bg-gray-50 rounded-lg cursor-crosshair" style="max-width:100%;height:auto;"></svg>
                         <div id="tooltip" class="absolute bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm w-64 opacity-0"></div>
                     </div>
                     <div id="chartLegend" class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4"></div>
@@ -104,8 +151,8 @@
 
                 <div class="w-full">
                     <h3 class="text-lg font-semibold text-center text-gray-700 mb-2">Espessura do Endométrio</h3>
-                    <div class="relative">
-                        <svg id="endometriumChart" viewBox="0 0 800 400" class="w-full bg-gray-50 rounded-lg cursor-crosshair"></svg>
+                    <div class="relative w-full">
+                        <svg id="endometriumChart" viewBox="0 0 800 400" class="w-full bg-gray-50 rounded-lg cursor-crosshair" style="max-width:100%;height:auto;"></svg>
                     </div>
                     <p class="text-center text-sm text-gray-500 mt-4">O revestimento uterino engrossa para uma possível gravidez e descama se ela não ocorre.</p>
                 </div>
@@ -387,10 +434,10 @@
                 tooltip.style.opacity = 1;
                 const svgRect = svgHormone.getBoundingClientRect();
                 const tooltipWidth = tooltip.offsetWidth || 256;
-                let left = (event.clientX - svgRect.left) - tooltipWidth / 2;
+                let left = (event.touches ? event.touches[0].clientX : event.clientX) - svgRect.left - tooltipWidth / 2;
                 left = Math.max(0, Math.min(left, svgRect.width - tooltipWidth));
                 tooltip.style.left = `${left}px`;
-                tooltip.style.top = `${event.clientY - svgRect.top - 10}px`;
+                tooltip.style.top = `${(event.touches ? event.touches[0].clientY : event.clientY) - svgRect.top - 10}px`;
             }
 
             function getPhaseKeyFromDay(day) {
@@ -422,10 +469,8 @@
                 // Atualiza o diagrama central
                 const phase = cycleData[phaseKey];
                 if (!phase) return;
-                centerText.textContent = phase.name;
                 // Atualiza painel lateral
                 updateInfoPanel(phaseKey);
-                // Destaca fase no diagrama (opcional: pode adicionar classe CSS)
             }
 
             // Função central de sincronização ATUALIZADA
@@ -450,7 +495,10 @@
 
             // --- EVENT LISTENERS ---
 
+            // Slider touch e mouse
             daySlider.addEventListener('input', (e) => syncUIToDay(parseInt(e.target.value)));
+
+            // Gráfico hormonal: mouse
             svgHormone.addEventListener('mousemove', (e) => {
                 const svgRect = svgHormone.getBoundingClientRect();
                 const mouseX = e.clientX - svgRect.left;
@@ -458,6 +506,18 @@
                 syncUIToDay(day, e);
             });
             svgHormone.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+
+            // Gráfico hormonal: touch (mobile)
+            svgHormone.addEventListener('touchmove', (e) => {
+                const svgRect = svgHormone.getBoundingClientRect();
+                const touch = e.touches[0];
+                const mouseX = touch.clientX - svgRect.left;
+                const day = Math.max(1, Math.min(28, Math.round((mouseX - padding) / dayWidth) + 1));
+                syncUIToDay(day, e);
+            });
+            svgHormone.addEventListener('touchend', () => { tooltip.style.opacity = 0; });
+
+            // Gráfico endométrio: mouse
             svgEndometrium.addEventListener('mousemove', (e) => {
                 const svgRect = svgEndometrium.getBoundingClientRect();
                 const mouseX = e.clientX - svgRect.left;
@@ -465,6 +525,16 @@
                 syncUIToDay(day, e);
             });
             svgEndometrium.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+
+            // Gráfico endométrio: touch (mobile)
+            svgEndometrium.addEventListener('touchmove', (e) => {
+                const svgRect = svgEndometrium.getBoundingClientRect();
+                const touch = e.touches[0];
+                const mouseX = touch.clientX - svgRect.left;
+                const day = Math.max(1, Math.min(28, Math.round((mouseX - padding) / dayWidth) + 1));
+                syncUIToDay(day, e);
+            });
+            svgEndometrium.addEventListener('touchend', () => { tooltip.style.opacity = 0; });
 
             // --- INICIALIZAÇÃO ---
             function initialize() {
@@ -483,7 +553,6 @@
                 updateEndometriumMarker(1); // Garante marcador inicial
                 updateDiagramAndPanel('menstrual');
                 syncUIToDay(1);
-                // makePhaseButtonsInteractive(); // Removido, pois os botões não são mais interativos
             }
 
             initialize();
